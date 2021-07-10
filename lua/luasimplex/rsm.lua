@@ -235,24 +235,31 @@ local function initialise_real_variables(M: table, I: table, offset: integer)
 end
 
 
-local function initialise_artificial_variables(M, I, offset)
-  local nvars, nrows = M.nvars, M.nrows
-  local indexes, elements, row_starts = M.indexes, M.elements, M.row_starts
+local function initialise_artificial_variables(M: table, I: table, offset: integer)
+  local nrows: integer, nvars: integer = @integer( M.nrows ), @integer( M.nvars )
+  local indexes: integer[], elements: number[], row_starts: integer[] = @integer[]( M.indexes ), @number[]( M.elements ), @integer[]( M.row_starts )
+  local b: number[] = @number[]( M.b )
+  local xu: number[] = @number[]( I.xu )
+  local xl: number[] = @number[]( I.xl )
+  local x: number[] = @number[]( I.x )
+  local basic_costs: number[] = @number[]( I.basic_costs )
+  local basics: integer[] = @integer[]( I.basics )
+  local status: integer[] = @integer[]( I.status )
 
   for ii = 1, nrows do
-    local i = ii + offset
-    local z = M.b[i]
+    local i: integer = ii + offset
+    local z: number = b[i]
     for j = row_starts[i], row_starts[i+1]-1 do
-      z = z - elements[j] * I.x[indexes[j]]
+      z = z - elements[j] * x[indexes[j]]
     end
-    local k = nvars + i
-    I.x[k] = z
-    I.status[k] = BASIC
-    I.basics[i] = k
+    local k: integer = nvars + i
+    x[k] = z
+    status[k] = BASIC
+    basics[i] = k
     if z < 0 then
-      I.basic_costs[i], I.xl[k], I.xu[k] = -1, -math.huge, 0
+      basic_costs[i], xl[k], xu[k] = -1, -math.huge, 0
     else
-      I.basic_costs[i], I.xl[k], I.xu[k] = 1, 0, math.huge
+      basic_costs[i], xl[k], xu[k] = 1, 0, math.huge
     end
     if type(M) == "table" and M.variable_names and M.constraint_names then
       M.variable_names[k] = M.constraint_names[i].."_ARTIFICIAL"
