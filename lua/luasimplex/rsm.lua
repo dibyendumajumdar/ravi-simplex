@@ -188,13 +188,14 @@ local function update_variables(M: table, I: table)
 end
 
 
-local function update_Binverse(M, I)
-  local nrows, li, Bi = M.nrows, I.leaving_index, I.Binverse
+local function update_Binverse(M: table, I: table)
+  local nrows: integer, li: integer, Bi: number[] = @integer( M.nrows ), @integer( I.leaving_index ), @number[]( I.Binverse )
+  local gradient: number[] = @number[]( I.gradient )  
 
-  local ilg = 1 / I.gradient[li]
+  local ilg: number = 1.0 / gradient[li]
   for i = 1, nrows do
     if i ~= li then
-      local gr = I.gradient[i] * ilg
+      local gr: number = gradient[i] * ilg
       for j = 1, nrows do
         Bi[(i-1)*nrows + j] = Bi[(i-1)*nrows + j] - gr * Bi[(li-1)*nrows + j]
       end
