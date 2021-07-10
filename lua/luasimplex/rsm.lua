@@ -146,21 +146,21 @@ local function find_leaving_variable(M: table, I: table, entering_index: integer
     local g: number = gradient[i] * -s
     if math.abs(g) > TOL then
       local j: integer, bound: number = basics[i]
-      local found_bound = false
+      local found_bound: integer = 0
 
       if g > 0 then
         if xu[j] < math.huge then 
           bound = xu[j] 
-          found_bound = true
+          found_bound = 1
         end
       else
         if xl[j] > -math.huge then 
           bound = xl[j] 
-          found_bound = true
+          found_bound = 1
         end
       end
 
-      if found_bound then
+      if found_bound == 1 then
         local z: number = (bound - x[j]) / g
         -- we prefer to get rid of artificials when we can
         if z < max_change or (j > nvars and z <= max_change) then
@@ -290,9 +290,13 @@ end
 
 -- Solve -----------------------------------------------------------------------
 
-local function solve(M, I, S)
-  local TOLERANCE = I.TOLERANCE
-  
+local function solve(M: table, I: table, S)
+  local TOLERANCE: number = @number( I.TOLERANCE )
+  local x: number[] = @number[]( I.x )
+  local basic_costs: number[] = @number[]( I.basic_costs )
+  local basics: integer[] = @integer[]( I.basics )
+  local status: integer[] = @integer[]( I.status )
+
   local nvars, nrows = M.nvars, M.nrows
   I.iterations = 0
   I.phase = 1
@@ -313,14 +317,14 @@ local function solve(M, I, S)
     if I.entering_index == -1 then
       if I.phase == 1 then
         for i = 1, nrows do
-          if I.basics[i] > nvars and math.abs(I.x[I.basics[i] ]) > TOLERANCE  then
+          if basics[i] > nvars and math.abs(x[basics[i]]) > TOLERANCE  then
             luasimplex.error("Infeasible", M, I, S)
           end
         end
         I.costs = M.c
         for i = 1, nrows do
-          if I.basics[i] <= nvars then
-            I.basic_costs[i] = M.c[I.basics[i] ]
+          if basics[i] <= nvars then
+            basic_costs[i] = M.c[basics[i] ]
           end
         end
         I.phase = 2
@@ -376,6 +380,17 @@ end
 
 
 --------------------------------------------------------------------------------
+ravi.compile(initialise)
+ravi.compile(solve)
+ravi.compile(compute_gradient)
+ravi.compile(find_leaving_variable)
+ravi.compile(initialise_artificial_variables)
+ravi.compile(initialise_real_variables)
+ravi.compile(update_Binverse)
+ravi.compile(update_variables)
+ravi.compile(find_entering_variable)
+ravi.compile(compute_reduced_cost)
+ravi.compile(compute_pi)
 
 return
 {
