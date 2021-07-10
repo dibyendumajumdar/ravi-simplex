@@ -61,22 +61,27 @@ local function compute_reduced_cost(M: table, I: table)
 end
 
 
-local function find_entering_variable(M, I)
-  local TOL = -I.TOLERANCE
+local function find_entering_variable(M: table, I: table)
+  local TOL: number = -@number(I.TOLERANCE)
   -- Find the variable with the "lowest" reduced cost, keeping in mind that it might be at its upper bound
 
-  local cycles, minrc, entering_index = math.huge, 0, -1
-  for i = 1, M.nvars do
-    local s, rc = I.status[i]
+  local cycles: integer, minrc: number, entering_index: integer = @integer( math.maxinteger ), 0.0, -1
+  local nvars: integer = @integer( M.nvars )
+  local status: integer[] = @integer[]( I.status ) 
+  local reduced_costs: number[] = @number[]( I.reduced_costs )
+  local basic_cycles: integer[] = @integer[]( I.basic_cycles )
+
+  for i = 1, nvars do
+    local s: integer, rc: number = status[i]
     if s == NONBASIC_FREE then
-      rc = -math.abs(I.reduced_costs[i])
+      rc = - @number( math.abs(reduced_costs[i]) )
     else
-      rc = s * I.reduced_costs[i]
+      rc = s * reduced_costs[i]
     end
-    local c = I.basic_cycles[i]
+    local c: integer = basic_cycles[i]
     if (c < cycles and rc < TOL) or (c == cycles and rc < minrc) then
       minrc = rc
-      cycles = I.basic_cycles[i]
+      cycles = basic_cycles[i]
       entering_index = i
     end
   end
