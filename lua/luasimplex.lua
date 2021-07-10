@@ -69,6 +69,8 @@ function luasimplex.new_instance(nrows: integer, nvars: integer)
   I.reduced_costs = table.numarray(nvars, 0)
   I.gradient = table.numarray(nrows, 0)
   I.Binverse = table.numarray(nrows * nrows)
+
+  I.TOLERANCE = 1e-7
   return I
 end
 

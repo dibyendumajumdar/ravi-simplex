@@ -6,7 +6,7 @@ local luasimplex = require("luasimplex")
 
 -- Constants -------------------------------------------------------------------
 
-local TOLERANCE = 1e-7
+local TOLERANCE: number = 1e-7
 local NONBASIC_LOWER = 1
 local NONBASIC_UPPER = -1
 local NONBASIC_FREE = 2
@@ -17,11 +17,11 @@ local BASIC = 0
 
 local function compute_pi(M, I)
   -- pi = basic_costs' * Binverse
-  local nrows, pi, Bi, TOL = M.nrows, I.pi, I.Binverse, I.TOLERANCE
-  
+  local nrows: integer, pi: number[], Bi: number[], TOL: number = @integer( M.nrows ), @number[]( I.pi ), @number[]( I.Binverse ), @number( I.TOLERANCE )
+  local basic_costs: number[] = @number[]( I.basic_costs )
   for i = 1, nrows do pi[i] = 0 end
   for i = 1, nrows do
-    local c = I.basic_costs[i]
+    local c: number = basic_costs[i]
     if math.abs(c) > TOL then
       for j = 1, nrows do
         pi[j] = pi[j] + c * Bi[(i-1)*nrows + j]
