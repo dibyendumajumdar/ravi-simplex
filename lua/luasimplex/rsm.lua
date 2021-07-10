@@ -89,21 +89,23 @@ local function find_entering_variable(M: table, I: table)
 end
 
 
-local function compute_gradient(M, I, entering_index, gradient)
+local function compute_gradient(M: table, I: table, entering_index: integer, g)
   -- gradient = Binverse * entering column of A
-  local nrows, Bi = M.nrows, I.Binverse
-  local indexes, elements, row_starts = M.indexes, M.elements, M.row_starts
+  local nrows: integer, Bi: number[] = @integer( M.nrows ), @number[]( I.Binverse )
+  local indexes: integer[], elements: number[], row_starts: integer[] = @integer[]( M.indexes ), @number[]( M.elements ), @integer[]( M.row_starts )
+  local gradient: number[] = {}
 
-  if gradient then
+  if g then
+    gradient = @number[]( g )
     for i = 1, nrows do gradient[i] = 0 end
   else
     gradient = table.numarray(nrows, 0)
   end
 
   for i = 1, nrows do
-    local v
+    local v: number
     for j = row_starts[i], row_starts[i+1]-1 do
-      local column = indexes[j]
+      local column: integer = indexes[j]
       if column == entering_index then
         v = elements[j]
         break
