@@ -15,7 +15,7 @@ local BASIC = 0
 
 -- Computation parts -----------------------------------------------------------
 
-local function compute_pi(M, I)
+local function compute_pi(M: table, I: table)
   -- pi = basic_costs' * Binverse
   local nrows: integer, pi: number[], Bi: number[], TOL: number = @integer( M.nrows ), @number[]( I.pi ), @number[]( I.Binverse ), @number( I.TOLERANCE )
   local basic_costs: number[] = @number[]( I.basic_costs )
@@ -31,23 +31,27 @@ local function compute_pi(M, I)
 end
 
 
-local function compute_reduced_cost(M, I)
+local function compute_reduced_cost(M: table, I: table)
   -- reduced cost = cost - pi' * A 
-  local reduced_costs, status, TOL = I.reduced_costs, I.status, I.TOLERANCE
-  local indexes, elements, row_starts = M.indexes, M.elements, M.row_starts
+  local reduced_costs: number[], status: integer[], TOL: number = @number[]( I.reduced_costs ), @integer[]( I.status ), @number( I.TOLERANCE )
+  local indexes: integer[], elements: number[], row_starts: integer[] = @integer[]( M.indexes ), @number[]( M.elements ), @integer[]( M.row_starts )
+  local pi: number[] = @number[]( I.pi )
+  local nvars: integer = @integer( M.nvars )
+  local nrows: integer = @integer( M.nrows )
+  local costs: number[] = @number[]( I.costs )
 
   -- initialise with costs (phase 2) or zero (phase 1 and basic variables)
-  for i = 1, M.nvars do
-    reduced_costs[i] = status[i] ~= 0 and I.costs[i] or 0
+  for i = 1, nvars do
+    reduced_costs[i] = status[i] ~= 0 and costs[i] or 0
   end
 
   -- Compute rcs 'sideways' - work through elements of A using each one once
   -- the downside is that we write to reduced_costs frequently
-  for i = 1, M.nrows do
-    local p = I.pi[i]
+  for i = 1, nrows do
+    local p = pi[i]
     if math.abs(p) > TOL then
       for j = row_starts[i], row_starts[i+1]-1 do
-        local k = indexes[j]
+        local k: integer = indexes[j]
         if status[k] ~= 0 then
           reduced_costs[k] = reduced_costs[k] - p * elements[j]
         end        
