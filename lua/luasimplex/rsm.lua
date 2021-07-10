@@ -7,10 +7,10 @@ local luasimplex = require("luasimplex")
 -- Constants -------------------------------------------------------------------
 
 local TOLERANCE: number = 1e-7
-local NONBASIC_LOWER = 1
-local NONBASIC_UPPER = -1
-local NONBASIC_FREE = 2
-local BASIC = 0
+local NONBASIC_LOWER: integer = 1
+local NONBASIC_UPPER: integer = -1
+local NONBASIC_FREE: integer = 2
+local BASIC: integer = 0
 
 
 -- Computation parts -----------------------------------------------------------
@@ -209,19 +209,27 @@ end
 
 -- Initialisation --------------------------------------------------------------
 
-local function initialise_real_variables(M, I, offset)
-  for ii = 1, M.nvars do
-    local i = ii + offset
-    I.xu[i], I.xl[i] = M.xu[i], M.xl[i]
-    if M.xl[i] == -math.huge and M.xu[i] == math.huge then
-      I.x[i] = 0
-      I.status[i] = NONBASIC_FREE
-    elseif math.abs(M.xl[i]) < math.abs(M.xu[i]) then
-      I.x[i] = M.xl[i]
-      I.status[i] = NONBASIC_LOWER
+local function initialise_real_variables(M: table, I: table, offset: integer)
+  local nvars: integer = @integer( M.nvars )
+  local I_xu: number[] = @number[]( I.xu )
+  local I_xl: number[] = @number[]( I.xl )
+  local I_x: number[] = @number[]( I.x )
+  local M_xu: number[] = @number[]( M.xu )
+  local M_xl: number[] = @number[]( M.xl )
+  local status: integer[] = @integer[]( I.status )
+
+  for ii = 1, nvars do
+    local i: integer = ii + offset
+    I_xu[i], I_xl[i] = M_xu[i], M_xl[i]
+    if M_xl[i] == -math.huge and M_xu[i] == math.huge then
+      I_x[i] = 0
+      status[i] = NONBASIC_FREE
+    elseif math.abs(M_xl[i]) < math.abs(M_xu[i]) then
+      I_x[i] = M_xl[i]
+      status[i] = NONBASIC_LOWER
     else
-      I.x[i] = M.xu[i]
-      I.status[i] = NONBASIC_UPPER
+      I_x[i] = M_xu[i]
+      status[i] = NONBASIC_UPPER
     end
   end
 end
