@@ -174,11 +174,16 @@ local function find_leaving_variable(M: table, I: table, entering_index: integer
 end
 
 
-local function update_variables(M, I)
-  local c = I.max_change
-  for i = 1, M.nrows do
-    local j = I.basics[i]
-    I.x[j] = I.x[j] - c * I.gradient[i]
+local function update_variables(M: table, I: table)
+  local c: number = @number( I.max_change )
+  local basics: integer[] = @integer[]( I.basics )
+  local x: number[] = @number[]( I.x )
+  local gradient: number[] = @number[]( I.gradient )  
+  local nrows: integer = @integer( M.nrows )
+
+  for i = 1, nrows do
+    local j: integer = basics[i]
+    x[j] = x[j] - c * gradient[i]
   end
 end
 
