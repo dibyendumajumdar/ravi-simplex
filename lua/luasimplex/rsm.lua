@@ -123,31 +123,45 @@ local function compute_gradient(M: table, I: table, entering_index: integer, g)
 end
 
 
-local function find_leaving_variable(M, I, entering_index, gradient)
-  local TOL = I.TOLERANCE
+local function find_leaving_variable(M: table, I: table, entering_index: integer, gradient: number[])
+  local TOL: number = @number( I.TOLERANCE )
+  local status: integer[] = @integer[]( I.status )
+  local reduced_costs: number[] = @number[]( I.reduced_costs )
+  local xu: number[] = @number[]( I.xu )
+  local xl: number[] = @number[]( I.xl )
+  local x: number[] = @number[]( I.x )
+  local nrows: integer, nvars: integer = @integer( M.nrows ), @integer( M.nvars )
+  local basics: integer[] = @integer[]( I.basics )
 
-  local s = I.status[entering_index]
+  local s: integer = status[entering_index]
   if s == NONBASIC_FREE then
-    s = I.reduced_costs[entering_index] > 0 and -1 or 1
+    s = reduced_costs[entering_index] > 0 and -1 or 1
   end
 
-  local max_change, leaving_index, to_lower = I.xu[entering_index] - I.xl[entering_index], -1
+  local max_change: number, leaving_index: integer, to_lower = xu[entering_index] - xl[entering_index], -1
 
-  for i = 1, M.nrows do
-    local g = gradient[i] * -s
+  for i = 1, nrows do
+    local g: number = gradient[i] * -s
     if math.abs(g) > TOL then
-      local j, bound = I.basics[i]
+      local j: integer, bound: number = basics[i]
+      local found_bound = false
 
       if g > 0 then
-        if I.xu[j] < math.huge then bound = I.xu[j] end
+        if xu[j] < math.huge then 
+          bound = xu[j] 
+          found_bound = true
+        end
       else
-        if I.xl[j] > -math.huge then bound = I.xl[j] end
+        if xl[j] > -math.huge then 
+          bound = xl[j] 
+          found_bound = true
+        end
       end
 
-      if bound then
-        local z = (bound - I.x[j]) / g
+      if found_bound then
+        local z: number = (bound - x[j]) / g
         -- we prefer to get rid of artificials when we can
-        if z < max_change or (j > M.nvars and z <= max_change) then
+        if z < max_change or (j > nvars and z <= max_change) then
           max_change = z
           leaving_index = i
           to_lower = g < 0
