@@ -268,10 +268,10 @@ local function initialise_artificial_variables(M: table, I: table, offset: integ
 end
 
 
-local function initialise(M, I, S, c_arrays)
-  offset = c_arrays and -1 or 0
+local function initialise(M: table, I: table, S, c_arrays)
+  local offset: integer = c_arrays and -1 or 0
 
-  local nrows = M.nrows
+  local nrows: integer = @integer( M.nrows )
 
   if not S.TOLERANCE then S.TOLERANCE = TOLERANCE end
   I.TOLERANCE = S.TOLERANCE
@@ -279,7 +279,8 @@ local function initialise(M, I, S, c_arrays)
   initialise_real_variables(M, I, offset)
   initialise_artificial_variables(M, I, offset)
 
-  for i = 1, nrows do I.Binverse[(i-1)*nrows + i + offset] = 1 end
+  local Binverse: number[] = @number[]( I.Binverse )
+  for i = 1, nrows do Binverse[(i-1)*nrows + i + offset] = 1 end
 
   return I
 end
