@@ -104,16 +104,18 @@ local function compute_gradient(M: table, I: table, entering_index: integer, g)
 
   for i = 1, nrows do
     local v: number
+    local found: integer = 0
     for j = row_starts[i], row_starts[i+1]-1 do
       local column: integer = indexes[j]
       if column == entering_index then
         v = elements[j]
+        found = 1
         break
       elseif column > entering_index then
         break
       end
     end
-    if v then
+    if found == 1 then
       for j = 1, nrows do
         gradient[j] = gradient[j] + v * Bi[(j-1)*nrows + i]
       end
