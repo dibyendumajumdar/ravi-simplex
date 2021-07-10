@@ -187,11 +187,7 @@ end
 
 io.stderr:write("Testing netlib: ")
 io.stderr:write(speed)
-if type(luasimplex.darray(1)) == "table" then
-  io.stderr:write(", without ffi")
-else
-  io.stderr:write(", with ffi")
-end
+io.stderr:write(", without ffi")
 if use_c_structs then io.stderr:write(", C structs") end
 if use_c then io.stderr:write(", C rsm") end
 io.stderr:write("\n")
@@ -200,10 +196,12 @@ io.stderr:write("\n")
 local tests = {}
 
 for fn in lfs.dir(test_dir) do
+  print(fn)
   local name = fn:upper():match("(.+)%.[TXSIF]+$")
   if name then
     local answer = answers[name]
     if answer and (choices == 0 or chosen[name]) and not excluded[name] then
+      print(lfs.attributes(test_dir..fn, "size"))
       tests[#tests+1] = { fn = fn, name = name, answer = answer, size = lfs.attributes(test_dir..fn, "size") }
     end
   end

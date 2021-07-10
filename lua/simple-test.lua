@@ -7,13 +7,13 @@ local M =
   nvars = 4,
   -- number of constraints
   nrows = 2,
-  indexes = luasimplex.iarray(6, 1, 2, 3, 1, 2, 4),
-  elements = luasimplex.darray(6, 1, 2, 1, 2, 1, 1),
-  row_starts = luasimplex.iarray(3, 1, 4, 7),
-  c = luasimplex.darray(4, -1, -1, 0, 0),
-  xl = luasimplex.darray(4, 0, 0, 0, 0),
-  xu = luasimplex.darray(4, math.huge, math.huge, math.huge, math.huge),
-  b = luasimplex.darray(2, 3, 3),
+  indexes = @integer[] {1, 2, 3, 1, 2, 4},
+  elements = @number[] {1, 2, 1, 2, 1, 1},
+  row_starts = @integer[] {1, 4, 7},
+  c = @number[] {-1, -1, 0, 0},
+  xl = @number[] {0, 0, 0, 0},
+  xu = @number[] {math.huge, math.huge, math.huge, math.huge},
+  b = @number[] {3, 3},
 }
 
 local I = luasimplex.new_instance(M.nrows, M.nvars)

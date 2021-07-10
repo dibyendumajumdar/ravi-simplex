@@ -2,7 +2,6 @@ local math = require("math")
 local error, type = error, type
 
 local luasimplex = require("luasimplex")
-local iarray, darray = luasimplex.iarray, luasimplex.darray
 
 
 -- Constants -------------------------------------------------------------------
@@ -89,7 +88,7 @@ local function compute_gradient(M, I, entering_index, gradient)
   if gradient then
     for i = 1, nrows do gradient[i] = 0 end
   else
-    gradient = darray(nrows, 0)
+    gradient = table.numarray(nrows, 0)
   end
 
   for i = 1, nrows do
