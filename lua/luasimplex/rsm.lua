@@ -2,7 +2,7 @@ local math = require("math")
 local error, type = error, type
 
 local luasimplex = require("luasimplex")
-
+local abs = math.abs
 
 -- Constants -------------------------------------------------------------------
 
@@ -22,7 +22,7 @@ local function compute_pi(M: table, I: table)
   for i = 1, nrows do pi[i] = 0 end
   for i = 1, nrows do
     local c: number = basic_costs[i]
-    if math.abs(c) > TOL then
+    if abs(c) > TOL then
       for j = 1, nrows do
         pi[j] = pi[j] + c * Bi[(i-1)*nrows + j]
       end
@@ -49,7 +49,7 @@ local function compute_reduced_cost(M: table, I: table)
   -- the downside is that we write to reduced_costs frequently
   for i = 1, nrows do
     local p = pi[i]
-    if math.abs(p) > TOL then
+    if abs(p) > TOL then
       for j = row_starts[i], row_starts[i+1]-1 do
         local k: integer = indexes[j]
         if status[k] ~= 0 then
@@ -74,7 +74,7 @@ local function find_entering_variable(M: table, I: table)
   for i = 1, nvars do
     local s: integer, rc: number = status[i]
     if s == NONBASIC_FREE then
-      rc = - @number( math.abs(reduced_costs[i]) )
+      rc = - @number( abs(reduced_costs[i]) )
     else
       rc = s * reduced_costs[i]
     end
@@ -144,7 +144,7 @@ local function find_leaving_variable(M: table, I: table, entering_index: integer
 
   for i = 1, nrows do
     local g: number = gradient[i] * -s
-    if math.abs(g) > TOL then
+    if abs(g) > TOL then
       local j: integer, bound: number = basics[i]
       local found_bound: integer = 0
 
@@ -226,7 +226,7 @@ local function initialise_real_variables(M: table, I: table, offset: integer)
     if M_xl[i] == -math.huge and M_xu[i] == math.huge then
       I_x[i] = 0
       status[i] = NONBASIC_FREE
-    elseif math.abs(M_xl[i]) < math.abs(M_xu[i]) then
+    elseif abs(M_xl[i]) < abs(M_xu[i]) then
       I_x[i] = M_xl[i]
       status[i] = NONBASIC_LOWER
     else
@@ -296,8 +296,12 @@ local function solve(M: table, I: table, S)
   local basic_costs: number[] = @number[]( I.basic_costs )
   local basics: integer[] = @integer[]( I.basics )
   local status: integer[] = @integer[]( I.status )
+  local x: number[] = @number[]( I.x )
+  local xu: number[] = @number[]( I.xu )
+  local xl: number[] = @number[]( I.xl )
+  local basic_cycles: integer[] = @integer[]( I.basic_cycles )
 
-  local nvars, nrows = M.nvars, M.nrows
+  local nvars: integer, nrows: integer = @integer( M.nvars ), @integer( M.nrows )
   I.iterations = 0
   I.phase = 1
   local monitor = S.monitor
@@ -317,7 +321,7 @@ local function solve(M: table, I: table, S)
     if I.entering_index == -1 then
       if I.phase == 1 then
         for i = 1, nrows do
-          if basics[i] > nvars and math.abs(x[basics[i]]) > TOLERANCE  then
+          if basics[i] > nvars and abs(x[basics[i]]) > TOLERANCE  then
             luasimplex.error("Infeasible", M, I, S)
           end
         end
@@ -333,64 +337,69 @@ local function solve(M: table, I: table, S)
       end
     else
 
-      I.basic_cycles[I.entering_index] = I.basic_cycles[I.entering_index] + 1
+      basic_cycles[I.entering_index] = basic_cycles[I.entering_index] + 1
 
       compute_gradient(M, I, I.entering_index, I.gradient)
       local to_lower
       I.leaving_index, I.max_change, to_lower = find_leaving_variable(M, I, I.entering_index, I.gradient)
       if monitor then monitor(M, I, S, "leaving_variable") end
 
-      if I.phase == 2 and I.max_change >= math.huge / 2 then
+      local max_change: number = @number( I.max_change )
+      local entering_index: integer = @integer( I.entering_index )
+      local leaving_index: integer = @integer( I.leaving_index )
+      local costs: number[] = @number[]( I.costs )
+
+      if I.phase == 2 and max_change >= math.huge / 2 then
         luasimplex.error("Unbounded", M, I, S)
       end
 
-      if math.abs(I.max_change) > TOLERANCE then
+      if abs(max_change) > TOLERANCE then
         for i = 1, nvars do
-          I.basic_cycles[i] = 0
+          basic_cycles[i] = 0
         end
       end
 
       update_variables(M, I)
-      I.x[I.entering_index] = I.x[I.entering_index] + I.max_change
+      x[entering_index] = x[entering_index] + max_change
 
-      if I.leaving_index ~= -1 then
+      if leaving_index ~= -1 then
         update_Binverse(M, I)
 
-        local rli = I.basics[I.leaving_index]
-        I.x[rli] = to_lower and I.xl[rli] or I.xu[rli]
-        I.status[rli] = to_lower and NONBASIC_LOWER or NONBASIC_UPPER
+        local rli: integer = basics[leaving_index]
+        x[rli] = to_lower and xl[rli] or xu[rli]
+        status[rli] = to_lower and NONBASIC_LOWER or NONBASIC_UPPER
 
-        I.basics[I.leaving_index] = I.entering_index
-        I.basic_costs[I.leaving_index] = I.costs[I.entering_index]
+        basics[leaving_index] = entering_index
+        basic_costs[leaving_index] = costs[entering_index]
 
-        I.status[I.entering_index] = BASIC
+        status[entering_index] = BASIC
       else
-        I.status[I.entering_index] = -I.status[I.entering_index]
+        status[entering_index] = -status[entering_index]
       end
     end
   end
 
   local objective = 0
   for i = 1, nvars do
-    objective = objective + I.x[i] * M.c[i]
+    objective = objective + x[i] * M.c[i]
   end
 
-  return objective, I.x, I.iterations
+  return objective, x, I.iterations
 end
 
 
 --------------------------------------------------------------------------------
 ravi.compile(initialise)
-ravi.compile(solve)
-ravi.compile(compute_gradient)
-ravi.compile(find_leaving_variable)
 ravi.compile(initialise_artificial_variables)
 ravi.compile(initialise_real_variables)
+ravi.compile(compute_pi)
+ravi.compile(compute_reduced_cost)
+ravi.compile(compute_gradient)
+ravi.compile(find_leaving_variable)
+ravi.compile(find_entering_variable)
 ravi.compile(update_Binverse)
 ravi.compile(update_variables)
-ravi.compile(find_entering_variable)
-ravi.compile(compute_reduced_cost)
-ravi.compile(compute_pi)
+ravi.compile(solve)
 
 return
 {
