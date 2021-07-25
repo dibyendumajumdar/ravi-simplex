@@ -1,6 +1,11 @@
 local luasimplex = require("luasimplex")
 local mps = require("luasimplex.mps")
-local rsm = require("luasimplex.rsm")
+local rsm
+if compiler and compiler.loadfile then
+    rsm = compiler.loadfile('luasimplex/rsm.lua')()
+else
+    rsm = require("luasimplex.rsm")
+end
 local monitor = require("luasimplex.monitor")
 local lfs = require("lfs")
 local ok, ffi = pcall(require, "ffi")

@@ -1,5 +1,10 @@
 local luasimplex = require("luasimplex")
-local rsm = require("luasimplex.rsm")
+local rsm
+if compiler and compiler.loadfile then
+    rsm = compiler.loadfile('luasimplex/rsm.lua')()
+else
+    rsm = require("luasimplex.rsm")
+end
 
 local M =
 {
