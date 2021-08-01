@@ -1,10 +1,19 @@
 local luasimplex = require("luasimplex")
 local mps = require("luasimplex.mps")
 local rsm
-if compiler and compiler.loadfile then
-    rsm = compiler.loadfile('luasimplex/rsm.lua')()
+local has_gcc = os.execute('gcc --verbose')
+if ravi.jit() and has_gcc and compiler then
+  local computils = assert(require('aot'))
+  computils.comptoC('luasimplex/rsm.lua', 'luasimplex/rsm.c')
+  assert(os.execute("gcc -O2 -shared -fpic luasimplex/rsm.c -o luasimplex/rsm.so"))
+  local f = package.load_ravi_lib('luasimplex/rsm.so', 'mymain')
+  assert(f and type(f) == 'function')
+  rsm  = f()
+  assert(rsm and type(rsm) == 'table')
+elseif ravi.jit() and compiler and compiler.loadfile then
+  rsm = compiler.loadfile('luasimplex/rsm.lua')()
 else
-    rsm = require("luasimplex.rsm")
+  rsm = require("luasimplex.rsm")
 end
 local monitor = require("luasimplex.monitor")
 local lfs = require("lfs")
