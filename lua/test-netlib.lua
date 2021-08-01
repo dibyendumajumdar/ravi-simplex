@@ -1,20 +1,5 @@
 local luasimplex = require("luasimplex")
 local mps = require("luasimplex.mps")
-local rsm
-local has_gcc = os.execute('gcc --verbose')
-if ravi.jit() and has_gcc and compiler then
-  local computils = assert(require('aot'))
-  computils.comptoC('luasimplex/rsm.lua', 'luasimplex/rsm.c')
-  assert(os.execute("gcc -O2 -shared -fpic luasimplex/rsm.c -o luasimplex/rsm.so"))
-  local f = package.load_ravi_lib('luasimplex/rsm.so', 'mymain')
-  assert(f and type(f) == 'function')
-  rsm  = f()
-  assert(rsm and type(rsm) == 'table')
-elseif ravi.jit() and compiler and compiler.loadfile then
-  rsm = compiler.loadfile('luasimplex/rsm.lua')()
-else
-  rsm = require("luasimplex.rsm")
-end
 local monitor = require("luasimplex.monitor")
 local lfs = require("lfs")
 local ok, ffi = pcall(require, "ffi")
@@ -129,11 +114,13 @@ answers =
 
 -- read args
 local choices, chosen, exclusions, excluded = 0, {}, 0, {}
-local test_dir, speed, diagnose = "../../netlib-test-data/"
+local test_dir, speed, diagnose = "../netlib-data/"
 local no_ffi = false
 local use_c = false
 local use_c_structs = false
 local max_tests = math.huge
+local aot_compile = false
+local jit_compile = true
 
 local i = 1
 while i <= #arg do
@@ -151,6 +138,12 @@ while i <= #arg do
     use_c = true
   elseif arg[i] == "--c-structs" then
     use_c_structs = true
+  elseif arg[i] == "--no-jit" then
+    jit_compile = false
+    aot_compile = false
+  elseif arg[i] == "--aot" then
+    aot_compile = true
+    jit_compile = false
   elseif arg[i] == "--test-dir" then
     i = i + 1
     test_dir = arg[i]
@@ -198,6 +191,28 @@ if use_c then
   speed = "fast"
   diagnose = false
 end
+
+local rsm
+if aot_compile then
+  local has_gcc = os.execute('gcc --verbose')
+  if has_gcc then
+    local computils = assert(require('aot'))
+    computils.comptoC('luasimplex/rsm.lua', 'luasimplex/rsm.c')
+    assert(os.execute("gcc -O2 -shared -fpic luasimplex/rsm.c -o luasimplex/rsm.so"))
+    local f = package.load_ravi_lib('luasimplex/rsm.so', 'mymain')
+    assert(f and type(f) == 'function')
+    rsm  = f()
+    assert(rsm and type(rsm) == 'table')
+  else
+    error('To compile AOT gcc installation is needed')
+  end    
+elseif jit_compile then
+  rsm = compiler.loadfile('luasimplex/rsm.lua')()
+else
+  rsm = require("luasimplex.rsm")
+end
+
+
 
 io.stderr:write("Testing netlib: ")
 io.stderr:write(speed)
